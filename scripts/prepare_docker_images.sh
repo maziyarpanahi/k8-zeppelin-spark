@@ -1,1 +1,1 @@
-sudo docker image pull apache/zeppelin:0.10.1 && sudo docker image pull spark:v3.2.1
+sudo docker image pull apache/zeppelin:0.10.1 && sudo docker image pull apache/spark:v3.2.2 && sudo docker image pull datamechanics/spark:3.2.1-hadoop-3.3.1-java-8-scala-2.12-python-3.8-dm18
