@@ -1,0 +1,1 @@
+sudo docker image pull apache/zeppelin:0.10.1 && sudo docker image pull spark:v3.2.1
