@@ -18,6 +18,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: zeppelin-server-conf-map
+  namespace: spark
 data:
   # 'serviceDomain' is a Domain name to use for accessing Zeppelin UI.
   # Should point IP address of 'zeppelin-server' service.
@@ -28,10 +29,11 @@ data:
   # Default value is 'local.zeppelin-project.org' while it points 127.0.0.1 and `kubectl port-forward zeppelin-server` will give localhost to connects.
   # If you have your ingress controller configured to connect to `zeppelin-server` service and have a domain name for it (with wildcard subdomain point the same address), you can replace serviceDomain field with your own domain.
   SERVICE_DOMAIN: local.zeppelin-project.org:8080
-  ZEPPELIN_K8S_SPARK_CONTAINER_IMAGE:  datamechanics/spark:3.2.1-hadoop-3.3.1-java-8-scala-2.12-python-3.8-dm18
+  ZEPPELIN_K8S_SPARK_CONTAINER_IMAGE: maziyar/multivac-spark:0.0.1
   ZEPPELIN_K8S_CONTAINER_IMAGE: maziyar/multivac-zeppelin:0.0.2
   ZEPPELIN_HOME: /opt/zeppelin
   ZEPPELIN_SERVER_RPC_PORTRANGE: 12320:12320
+  ZEPPELIN_K8S_NAMESPACE: spark-ui
   # default value of 'master' property for spark interpreter.
   SPARK_MASTER: k8s://https://kubernetes.default.svc
   # default value of 'SPARK_HOME' property for spark interpreter.
@@ -41,6 +43,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: zeppelin-server-conf
+  namespace: spark
 data:
   nginx.conf: |
     daemon off;
@@ -91,6 +94,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: zeppelin-server
+  namespace: spark
   labels:
     app.kubernetes.io/name: zeppelin-server
 spec:
@@ -198,6 +202,7 @@ kind: Service
 apiVersion: v1
 metadata:
   name: zeppelin-server
+  namespace: spark
 spec:
   ports:
     - name: http
@@ -211,11 +216,13 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: zeppelin-server
+  namespace: spark
 ---
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: zeppelin-server-role
+  namespace: spark
 rules:
 - apiGroups: [""]
   resources: ["pods", "services", "configmaps"]
@@ -228,7 +235,7 @@ kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: zeppelin-server-role-binding
-  namespace: default
+  namespace: spark
 subjects:
 - kind: ServiceAccount
   name: zeppelin-server
