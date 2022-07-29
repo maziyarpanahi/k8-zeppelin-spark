@@ -2,6 +2,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: pvc-nfs-pv1
+  namespace: spark
 spec:
   storageClassName: manual
   accessModes:
@@ -14,6 +15,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: pvc-nfs-pv2
+  namespace: spark
 spec:
   storageClassName: manual
   accessModes:
@@ -26,6 +28,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: pvc-nfs-pv3
+  namespace: spark
 spec:
   storageClassName: manual
   accessModes:
@@ -33,3 +36,16 @@ spec:
   resources:
     requests:
       storage: 2Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-nfs-pv4
+  namespace: spark
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 5Gi
