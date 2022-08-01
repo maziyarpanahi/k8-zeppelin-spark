@@ -1,0 +1,16 @@
+name: python_3_with_R
+channels:
+  - conda-forge
+  - defaults
+  - johnsnowlabs
+dependencies:
+  - python=3.8
+  - pycodestyle
+  - scipy
+  - numpy=1.19.5
+  - ipython
+  - ipykernel
+  - jupyter_client
+  - pip
+  - pip:
+    - spark-nlp
