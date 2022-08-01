@@ -3,11 +3,8 @@
 ## APPLY
 
 kubectl apply -f zeppelin-pv-nfs.yaml
-kubectl get pv --all-namespaces
 kubectl apply -f zeppelin-pvc-nfs.yaml
-kubectl get pvc --all-namespaces
 kubectl apply -f zeppelin-server.yaml
-kubectl get pod --all-namespaces
 
 ## DELETE
 
@@ -42,3 +39,13 @@ spark.kubernetes.executor.volumes.persistentVolumeClaim.pv-nfs-pv4.options.claim
 ### Driver
 
 Add the volume and volumeMount inside 100-interpreter-spec.yaml for the Driver to share the NFS path with the executors
+
+## Scale
+
+Add a new machine to K8s cluster on OpenStack:
+
+- Container Infra -> Clusters -> Update Clsuter -> increase the size (wait until the update is complete)
+- Pull all required docker images (some are large and they cause timeout during Pod init if they don't exist already)
+- Create a diretory to be mounted to NFS on the new machine(s) (`sudo mkdir /mnt/nfs_server`)
+- Add new machine(s) to `/etc/exports` (`exportfs -a`)
+- Add new machine's IP address to OpenStack Security Group to access the NFS server (port 2049)
