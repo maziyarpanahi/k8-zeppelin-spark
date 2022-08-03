@@ -2,9 +2,10 @@ FROM datamechanics/spark:3.2.1-hadoop-3.3.1-java-8-scala-2.12-python-3.8-latest
 
 USER root
 
-WORKDIR /opt/spark/work-dir
-# COPY ./images/spark/datamechanics/jars /opt/spark/jars
-ADD https://s3.amazonaws.com/auxdata.johnsnowlabs.com/public/jars/spark-nlp-assembly-4.0.2.jar /opt/spark/jars
+# Make sure we install LDAP
+RUN echo "$LOG_TAG install LDAP packages" && \
+    apt-get -y update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y libnss-ldap libpam-ldap ldap-utils
 
 # Install conda to manage python and R packages
 ARG miniconda_version="py37_4.9.2"
@@ -33,6 +34,22 @@ RUN rm -rf /opt/conda && \
     chmod -R 775 /opt/conda
 
 ENV PATH /opt/conda/envs/python_3_with_R/bin:/opt/conda/bin:$PATH
+
+# setup LDAP access for Spark
+COPY ./images/zeppelin/bin/ldap.conf /etc/ldap/
+COPY ./images/zeppelin/bin/ldap2.conf /etc/ldap.conf
+COPY ./images/zeppelin/bin/nsswitch.conf /etc/
+RUN echo -n | openssl s_client -connect ldaps.iscpif.fr:636 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' > /etc/ldap/ca_certs.pem
+RUN keytool -import \
+    -keystore $JAVA_HOME/jre/lib/security/cacerts \
+    -storepass changeit \
+    -noprompt \
+    -alias mycert \
+    -file /etc/ldap/ca_certs.pem
+
+
+WORKDIR /opt/spark/work-dir
+COPY ./images/spark/datamechanics/jars /opt/spark/jars
 
 ARG spark_uid=185
 # Specify the User that the actual main process will run as
