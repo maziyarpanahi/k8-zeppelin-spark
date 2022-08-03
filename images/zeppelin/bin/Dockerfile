@@ -30,7 +30,7 @@ ENV LOG_TAG="[ZEPPELIN_${Z_VERSION}]:" \
 # Make sure we install LDAP
 RUN echo "$LOG_TAG install basic packages" && \
     apt-get -y update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y locales language-pack-en tini openjdk-8-jre-headless wget unzip libnss-ldap ldap-utils vim nano && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y locales language-pack-en tini openjdk-8-jre-headless wget unzip libnss-ldap libpam-ldap ldap-utils vim nano && \
     # Cleanup
     rm -rf /var/lib/apt/lists/* && \
     apt-get autoclean && \
@@ -82,6 +82,18 @@ COPY log4j.properties ${ZEPPELIN_HOME}/conf/
 COPY log4j_docker.properties ${ZEPPELIN_HOME}/conf/
 COPY log4j2.properties ${ZEPPELIN_HOME}/conf/
 COPY log4j2_docker.properties ${ZEPPELIN_HOME}/conf/
+
+# setup LDAP access for Zeppelin
+COPY ldap.conf /etc/ldap/
+COPY ldap2.conf /etc/ldap.conf
+COPY nsswitch.conf /etc/
+RUN echo -n | openssl s_client -connect ldaps.iscpif.fr:636 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' > /etc/ldap/ca_certs.pem
+RUN keytool -import \
+    -keystore $JAVA_HOME/jre/lib/security/cacerts \
+    -storepass changeit \
+    -noprompt \
+    -alias mycert \
+    -file /etc/ldap/ca_certs.pem
 
 USER 1000
 
