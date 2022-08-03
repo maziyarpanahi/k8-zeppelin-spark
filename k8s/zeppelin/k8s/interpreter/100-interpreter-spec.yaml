@@ -87,6 +87,15 @@ spec:
         {{zeppelin.k8s.interpreter.gpu.type}}: "{{zeppelin.k8s.interpreter.gpu.nums}}"
   {% endif %}
   {% endif %}
+  {% if zeppelin.k8s.interpreter.group.name == "sh" %}
+    volumeMounts:
+    - mountPath: /home
+      name: pv-nfs-pv4
+  volumes:
+  - name: pv-nfs-pv4
+    persistentVolumeClaim:
+      claimName: pvc-nfs-pv4
+  {% endif %}
   {% if zeppelin.k8s.interpreter.group.name == "spark" %}
     volumeMounts:
     - name: spark-home
