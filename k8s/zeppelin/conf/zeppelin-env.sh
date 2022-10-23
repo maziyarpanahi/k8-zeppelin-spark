@@ -117,6 +117,7 @@ export ZEPPELIN_NOTEBOOK_PUBLIC=false               # Make notebook public by de
 # export ZEPPELIN_IMPERSONATE_SPARK_PROXY_USER  #Optional, by default is true; can be set to false if you don't want to use --proxy-user option with Spark interpreter when impersonation enabled
 export ZEPPELIN_IMPERSONATE_SPARK_PROXY_USER=false
 export ZEPPELIN_IMPERSONATE_CMD='sudo -H -u ${ZEPPELIN_IMPERSONATE_USER} bash -c '
+export ZEPPELIN_LOG_DIR="/opt/zeppelin/logs"
 export LDAPTLS_REQCERT=ALLOW
 export TLS_CACERT=/etc/ldap/ca_certs.pem
 export TLS_REQCERT allow
