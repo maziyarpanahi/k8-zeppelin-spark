@@ -8,9 +8,8 @@ RUN echo "$LOG_TAG install LDAP packages" && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y libnss-ldap libpam-ldap ldap-utils
 
 # Install conda to manage python and R packages
-ARG miniconda_version="py37_4.9.2"
-# Hashes via https://docs.conda.io/en/latest/miniconda_hashes.html
-ARG miniconda_sha256="79510c6e7bd9e012856e25dcb21b3e093aa4ac8113d9aa7e82a86987eabe1c31"
+ARG miniconda_version="py38_4.8.3"
+ARG miniconda_sha256="879457af6a0bf5b34b48c12de31d4df0ee2f06a8e68768e5758c3293b2daf688"
 # Install python and R packages via conda
 COPY ./images/zeppelin/bin/env_python_3_with_R.yml /env_python_3_with_R.yml
 
@@ -39,14 +38,11 @@ ENV PATH /opt/conda/envs/python_3_with_R/bin:/opt/conda/bin:$PATH
 COPY ./images/zeppelin/bin/ldap.conf /etc/ldap/
 COPY ./images/zeppelin/bin/ldap2.conf /etc/ldap.conf
 COPY ./images/zeppelin/bin/nsswitch.conf /etc/
-RUN echo -n | openssl s_client -connect ldaps.iscpif.fr:636 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' > /etc/ldap/ca_certs.pem
-RUN keytool -import \
-    -keystore $JAVA_HOME/jre/lib/security/cacerts \
-    -storepass changeit \
-    -noprompt \
-    -alias mycert \
-    -file /etc/ldap/ca_certs.pem
+RUN   echo "session required    pam_mkhomedir.so skel=/etc/skel umask=0022" >> /etc/pam.d/common-session
 
+RUN echo -n | openssl s_client -connect ldaps.iscpif.fr:636 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' > /etc/ldap/ca_certs.pem && \
+    keytool -import -keystore $JAVA_HOME/jre/lib/security/cacerts -storepass changeit -noprompt -alias mycert -file /etc/ldap/ca_certs.pem && \
+    getent passwd
 
 WORKDIR /opt/spark/work-dir
 COPY ./images/spark/datamechanics/jars /opt/spark/jars
