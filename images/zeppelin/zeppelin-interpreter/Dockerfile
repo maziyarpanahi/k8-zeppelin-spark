@@ -13,28 +13,38 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+ARG ZEPPELIN_DISTRIBUTION_IMAGE=multivac-zeppelin:0.10.1
+FROM $ZEPPELIN_DISTRIBUTION_IMAGE AS zeppelin-distribution
+
 FROM ubuntu:20.04
 
 LABEL maintainer="Apache Software Foundation <dev@zeppelin.apache.org>"
 
-ENV Z_VERSION="0.10.1"
+ARG version="0.10.1"
 
-ENV LOG_TAG="[ZEPPELIN_${Z_VERSION}]:" \
-    ZEPPELIN_HOME="/opt/zeppelin" \
-    HOME="/opt/zeppelin" \
-    LANG=en_US.UTF-8 \
-    LC_ALL=en_US.UTF-8 \
-    JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64 \
-    ZEPPELIN_ADDR="0.0.0.0"
+ENV VERSION="${version}" \
+    ZEPPELIN_HOME="/opt/zeppelin"
 
-# Make sure we install LDAP
-RUN echo "$LOG_TAG install basic packages" && \
+RUN set -ex && \
     apt-get -y update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y locales language-pack-en tini openjdk-8-jre-headless wget unzip libnss-ldap libpam-ldap ldap-utils vim nano && \
     # Cleanup
     rm -rf /var/lib/apt/lists/* && \
     apt-get autoclean && \
     apt-get clean
+
+COPY --from=zeppelin-distribution /opt/zeppelin/bin ${ZEPPELIN_HOME}/bin
+COPY log4j.properties ${ZEPPELIN_HOME}/conf/
+COPY log4j_yarn_cluster.properties ${ZEPPELIN_HOME}/conf/
+# Decide:
+## 1) Build a huge image with all interpreters (default)
+COPY --from=zeppelin-distribution /opt/zeppelin/interpreter ${ZEPPELIN_HOME}/interpreter
+## 2) Build an image with only some interpreters
+#### Copy interpreter-shaded JAR, needed for all interpreters
+### COPY --from=zeppelin-distribution /opt/zeppelin/interpreter/zeppelin-interpreter-shaded-${VERSION}.jar ${ZEPPELIN_HOME}/interpreter/zeppelin-interpreter-shaded-${VERSION}.jar
+#### Copy specific interpreters,  replace "${interpreter_name}" with your interpreter. Of course you can repeat the line with defferent interpreter
+### COPY --from=zeppelin-distribution /opt/zeppelin/interpreter/${interpreter_name}  ${ZEPPELIN_HOME}/interpreter/${interpreter_name}
+
 
 # Install conda to manage python and R packages
 ARG miniconda_version="py38_4.8.3"
@@ -60,27 +70,7 @@ RUN set -ex && \
     mamba clean -ay
     # Allow to modify conda packages. This allows malicious code to be injected into other interpreter sessions, therefore it is disabled by default
     # chmod -R ug+rwX /opt/conda
-ENV PATH /opt/conda/envs/python_3_with_R/bin:/opt/conda/bin:$PATH
-
-RUN echo "$LOG_TAG Download Zeppelin binary" && \
-    mkdir -p ${ZEPPELIN_HOME} && \
-    wget -nv -O /tmp/zeppelin-${Z_VERSION}-bin-all.tgz https://archive.apache.org/dist/zeppelin/zeppelin-${Z_VERSION}/zeppelin-${Z_VERSION}-bin-all.tgz && \
-    tar --strip-components=1 -zxvf  /tmp/zeppelin-${Z_VERSION}-bin-all.tgz -C ${ZEPPELIN_HOME} && \
-    rm -f /tmp/zeppelin-${Z_VERSION}-bin-all.tgz && \
-    chown -R root:root ${ZEPPELIN_HOME} && \
-    mkdir -p ${ZEPPELIN_HOME}/logs ${ZEPPELIN_HOME}/run ${ZEPPELIN_HOME}/webapps && \
-    # Allow process to edit /etc/passwd, to create a user entry for zeppelin
-    chgrp root /etc/passwd && chmod ug+rw /etc/passwd && \
-    # Give access to some specific folders
-    chmod -R 775 "${ZEPPELIN_HOME}/logs" "${ZEPPELIN_HOME}/run" "${ZEPPELIN_HOME}/notebook" "${ZEPPELIN_HOME}/conf" && \
-    # Allow process to create new folders (e.g. webapps)
-    chmod 775 ${ZEPPELIN_HOME} && \
-    chmod -R 775 /opt/conda
-
-COPY log4j.properties ${ZEPPELIN_HOME}/conf/
-COPY log4j_docker.properties ${ZEPPELIN_HOME}/conf/
-COPY log4j2.properties ${ZEPPELIN_HOME}/conf/
-COPY log4j2_docker.properties ${ZEPPELIN_HOME}/conf/
+ENV PATH /opt/conda/bin:$PATH
 
 # setup LDAP access for Zeppelin
 COPY ldap.conf /etc/ldap/
@@ -89,13 +79,16 @@ COPY nsswitch.conf /etc/
 RUN   echo "session required    pam_mkhomedir.so skel=/etc/skel umask=0022" >> /etc/pam.d/common-session
 
 RUN echo -n | openssl s_client -connect ldaps.iscpif.fr:636 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' > /etc/ldap/ca_certs.pem && \
+    mkdir -p $JAVA_HOME/jre/lib/security/ && \
     keytool -import -keystore $JAVA_HOME/jre/lib/security/cacerts -storepass changeit -noprompt -alias mycert -file /etc/ldap/ca_certs.pem && \
     getent passwd
 
+RUN mkdir -p "${ZEPPELIN_HOME}/logs" "${ZEPPELIN_HOME}/run" "${ZEPPELIN_HOME}/local-repo" && \
+     # Allow process to edit /etc/passwd, to create a user entry for zeppelin
+    chgrp root /etc/passwd && chmod ug+rw /etc/passwd && \
+    # Give access to some specific folders
+    chmod -R 775 "${ZEPPELIN_HOME}/logs" "${ZEPPELIN_HOME}/run" "${ZEPPELIN_HOME}/local-repo"
+
 USER 1000
-
-EXPOSE 8080
-
 ENTRYPOINT [ "/usr/bin/tini", "--" ]
 WORKDIR ${ZEPPELIN_HOME}
-CMD ["bin/zeppelin.sh"]

@@ -1,0 +1,37 @@
+name: python_3_with_R
+channels:
+  - conda-forge
+  - defaults
+  - johnsnowlabs
+dependencies:
+  - python=3.8
+  - pycodestyle
+  - scipy
+  - numpy=1.19.5
+  - grpcio
+  - protobuf
+  - pandasql
+  - ipython
+  - ipykernel
+  - jupyter_client
+  - hvplot
+  - plotnine
+  - seaborn
+  - intake
+  - intake-parquet
+  - intake-xarray
+  - altair
+  - vega_datasets
+  - plotly
+  - r-base=3
+  - r-data.table
+  - r-evaluate
+  - r-base64enc
+  - r-knitr
+  - r-ggplot2
+  - r-irkernel
+  - r-shiny
+  - r-googlevis
+  - pip
+  - pip:
+    - spark-nlp==4.2.0
