@@ -48,7 +48,7 @@ RUN echo -n | openssl s_client -connect ldaps.iscpif.fr:636 | sed -ne '/-BEGIN C
 RUN getent passwd
 
 WORKDIR /opt/spark/work-dir
-COPY ./images/spark/datamechanics/jars /opt/spark/jars
+COPY ./images/spark/native/jars /opt/spark/jars
 
 ARG spark_uid=185
 # Specify the User that the actual main process will run as
