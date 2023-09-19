@@ -13,7 +13,7 @@ spec:
     - ReadWriteMany
   nfs:
     server: "{{NFS_SERVER_IP}}"
-    path: "/mnt/nfs_server/notebooks"
+    path: "notebooks"
 ---
 apiVersion: v1
 kind: PersistentVolume
@@ -29,7 +29,7 @@ spec:
     - ReadWriteMany
   nfs:
     server: "{{NFS_SERVER_IP}}"
-    path: "/mnt/nfs_server/conf"
+    path: "/data/conf"
 ---
 apiVersion: v1
 kind: PersistentVolume
@@ -45,7 +45,7 @@ spec:
     - ReadWriteMany
   nfs:
     server: "{{NFS_SERVER_IP}}"
-    path: "/mnt/nfs_server/k8s"
+    path: "/data/k8s"
 ---
 apiVersion: v1
 kind: PersistentVolume
@@ -61,4 +61,4 @@ spec:
     - ReadWriteMany
   nfs:
     server: "{{NFS_SERVER_IP}}"
-    path: "/mnt/nfs_server/sparkworkdir"
+    path: "/data/sparkworkdir"
